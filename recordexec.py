@@ -52,6 +52,9 @@ class CompilationError(Exception):
     def __init__(self, e):
         self.err = e
     
+    def __str__(self):
+        return str(self.err)
+    
 
 def tracefunc(frame, event, arg):
     global EVENTS, OR
