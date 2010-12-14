@@ -1,0 +1,13 @@
+application: codeviz
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /exec
+  script: webexec.py
+- url: /
+  static_files: index.html
+  upload: index.html
+- url: /js
+  static_dir: js

@@ -1,0 +1,66 @@
+<html>
+  <head>
+    <title>Canvas Tests</title>
+    <style type="text/css" media="screen">
+      canvas {
+        border: solid black 2px;
+      }
+    </style>
+    <script type="text/javascript" charset="utf-8">
+      
+      window.onload = function() {
+        
+        var canvas = document.getElementById('canvas')
+        
+        var w = 10
+        var h = 10
+        
+        var cols = (canvas.width - 200) / w
+        var rows = canvas.height / h
+        
+        var rects = []
+        
+        function init() {
+          for(var r=0; r < rows; r++) {
+            rects[r] = []
+            for(var c=0; c < cols; c++) {
+              rects[r][c] = {x: c*w, y: r*h, h: h, w: w}
+            }
+          } 
+        }
+        
+        function render() {
+          var ctx = document.getElementById('canvas').getContext('2d')
+          for (var r=0; r < rects.length; r++) {
+            for (var c=0; c < rects[r].length; c++) {
+              var rect = rects[r][c]
+              ctx.strokeRect(rect.x, rect.y, rect.w, rect.h)
+            }
+          }
+        }
+        
+        init()
+        
+        console.log('----- DRAW ------')
+        
+        var start = new Date()
+        render()
+        var end = new Date()
+        
+        var mselapsed = end.getTime() - start.getTime()
+        var rectsDrawn = cols * rows
+        
+        console.log(rectsDrawn + " rects")
+        console.log(mselapsed / 1000 + " sec")
+        console.log(mselapsed / rectsDrawn + " ms / rect")
+        
+        document.getElementById
+        
+      }
+      
+    </script>
+  </head>
+  <body>
+    <canvas id="canvas" width="1000" height="800"></canvas>
+  </body>
+</html>

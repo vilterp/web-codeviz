@@ -1,0 +1,228 @@
+<html>
+  <head>
+    <title>Dynamic Calls Test</title>
+    <style type="text/css" media="screen">
+      #container {
+        border: solid 2px black;
+        width: 100%;
+        overflow: scroll;
+      }
+    </style>
+    <script src="js/jquery-1.4.4.min.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript" charset="utf-8">
+      $(window).bind('load', function(){
+        $('#source-form').submit(function(){
+          $.post(
+            '/exec',
+            {
+              'source': $('#source').val()
+            },
+            function(data, status, xhr) {
+              if(data.type == 'success') {
+                var events = data.events
+                var co = build_call_objs(events)
+                var canvas = $('#canvas')[0]
+                var ctx = canvas.getContext('2d')
+                var calls = layout(co, ctx)
+                render(calls, canvas, ctx)
+              } else {
+                console.log('error', data.msg, data.lineno)
+              }
+            },
+            'json'
+          )
+          return false // so the form doesn't actuall submit
+        })
+      })
+      function build_call_objs(events) {
+        
+        function bco(events, startind) {
+          var evt = events[startind]
+          // get call info
+          var call = {
+            type: 'call',
+            func: evt.func,
+            args: evt.args,
+            subevents: []
+          }
+          // get subcalls
+          var nextind = startind + 1
+          while(true) {
+            var nextevt = events[nextind]
+            if(nextevt.type == 'print') {
+              call.subevents.push({
+                type: 'print',
+                output: nextevt.output
+              })
+              nextind++
+              continue
+            } else if(nextevt.type == 'call') {
+              var res = bco(events, nextind)
+              call.subevents.push(res[0])
+              nextind = res[1]
+            } else if(nextevt.type == 'return') {
+              call.retval = nextevt.val
+              break
+            }
+          }
+          return [call, nextind + 1]
+        }
+        
+        return bco(events, 0)[0]
+      }
+      
+      var ARROW = ' \u2192 '
+      var HEIGHT = 25
+      var CALL_SPACING = HEIGHT + 10
+      var MARGIN = 7
+      
+      function layout(call, context) {
+        var calls = []
+        var max_y = 0
+        var max_x = 0
+        context.font = 'courier 10'
+        function ly(call, startx, starty) {
+          calls.push(call)
+          call.calltext = call.func + '('
+          for (var i=0; i < call.args.length; i++) {
+            call.calltext += repr(call.args[i])
+            if(i != call.args.length - 1) {
+              call.calltext += ', '
+            }
+          }
+          call.calltext += ')'
+          if(call.retval == null) {
+            call.rettext = 'None'
+          }
+          call.rettext = repr(call.retval)
+          call.x = startx
+          call.y = starty
+          call.height = HEIGHT
+          call.rolled_over = false
+          var x = startx + CALL_SPACING
+          var y = starty + HEIGHT
+          for (var i=0; i < call.subevents.length; i++) {
+            var evt = call.subevents[i]
+            if(evt.type == 'print') {
+              continue
+            } else {
+              var res = ly(evt, x, y)
+              x = res + CALL_SPACING
+            }
+          }
+          var minwidth = context.measureText(call.calltext + ARROW + call.rettext).width + MARGIN * 2
+          if(x - startx < minwidth) {
+            x = startx + minwidth
+          }
+          call.width = x - startx
+          if(x > max_x) {
+            max_x = x
+          }
+          if(y > max_y) {
+            max_y = y
+          }
+          return x
+        }
+        ly(call, CALL_SPACING, HEIGHT)
+        return {
+          calls: calls,
+          max_x: max_x,
+          max_y: max_y
+        }
+      }
+      
+      function repr(obj) {
+        if(obj == null) {
+          return 'None'
+        } else if(typeof(obj) == 'boolean') {
+          if(obj) {
+            return 'True'
+          } else {
+            return 'False'
+          }
+        } else if(obj instanceof Array) {
+          var res = '['
+          for (var i=0; i < obj.length; i++) {
+            res += repr(obj[i])
+            if(i != obj.length - 1) {
+              res += ', '
+            }
+          }
+          return res + ']'
+        } else if(typeof(obj) == 'string') {
+          var res = "'"
+          for (var i=0; i < obj.length; i++) {
+            var c = obj[i]
+            if(c == '\n') {
+              res += '\\n'
+            } else if(c == '\t') {
+              res += '\\t'
+            } else if(c == "'") {
+              res += "\\'"
+            } else {
+              res += c
+            }
+          }
+          return res + "'"
+        } else if(typeof(obj) == 'number') {
+          return String(obj)
+        } else {
+          var items = []
+          for(var key in obj) {
+            res += repr(key)
+            res += ': '
+            res += repr(obj[key])
+          }
+          var res = '{'
+          for (var i=0; i < items.length; i++) {
+            res += items[i]
+            if(i != items.length - 1) {
+              res += ', '
+            }
+          }
+          return res + '}'
+        }
+      }
+      
+      function render(calls, canvas, ctx) {
+        canvas.height = calls.max_y
+        canvas.width = calls.max_x + CALL_SPACING
+        // clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        // render calls
+        ctx.lineStyle = 'black'
+        ctx.lineWidth = 1
+        // for text
+        ctx.fillStyle = 'black'
+        ctx.font = 'monospace 12'
+        var call_list = calls.calls
+        for (var i=0; i < call_list.length; i++) {
+          // TODO: optimize all these calculations
+          var call = call_list[i]
+          // draw box
+          ctx.strokeRect(call.x, canvas.height - call.y, call.width, call.height)
+          // draw call text
+          ctx.fillText(call.calltext, call.x + MARGIN, canvas.height - call.y + HEIGHT - MARGIN)
+          // draw retval text
+          var retvaltext = ARROW + call.rettext
+          var rtwidth = ctx.measureText(retvaltext).width
+          ctx.fillText(retvaltext, call.x + call.width - MARGIN - rtwidth, canvas.height - call.y + HEIGHT - MARGIN)
+        }
+      }
+      
+    </script>
+  </head>
+  <body>
+    <form id="source-form" action="exec" method="post" accept-charset="utf-8">
+      <p>
+        <textarea id="source" name="source" rows="20" cols="60"></textarea>
+      </p>
+      <p>
+        <input type="submit" value="Exec"/>
+      </p>
+    </form>
+      <div id="container">
+        <canvas id="canvas"></canvas>
+      </div>
+  </body>
+</html>
