@@ -8,6 +8,13 @@ OR = 0
 # TODO: deal width lambdas, classes
 # BUG: deep copy objects or something so they don't change after going into EVENTS
 
+RESTRICTED_BUILTINS = {}
+blacklist = set(['open', 'input', 'raw_input', 'eval', 'quit', '__import__'])
+import __builtin__
+for item in dir(__builtin__):
+    if item not in blacklist:
+        RESTRICTED_BUILTINS[item] = getattr(__builtin__, item)
+
 def recordexec(code):
     global EVENTS, OR
     EVENTS = []
@@ -15,7 +22,7 @@ def recordexec(code):
     clean_globals = {
         "__name__": "__main__",
         "__file__": '<codeviz source>',
-        '__builtins__': __builtins__
+        '__builtins__': RESTRICTED_BUILTINS
     }
     actual_stdout = sys.stdout
     sys.stdout = OutputRecorder()

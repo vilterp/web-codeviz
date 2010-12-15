@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Dynamic Calls Test</title>
+    <title>Codeviz</title>
     <style type="text/css" media="screen">
       #container {
         border: solid 2px black;
@@ -26,7 +26,8 @@
                 var calls = layout(co, ctx)
                 render(calls, canvas, ctx)
               } else {
-                console.log('error', data.msg, data.lineno)
+                // TODO: visualize syntax error
+                alert('Syntax error: line ' + data.lineno + ': ' + data.msg)
               }
             },
             'json'
@@ -63,6 +64,13 @@
             } else if(nextevt.type == 'return') {
               call.retval = nextevt.val
               break
+            } else if(nextevt.type == 'exception') {
+              // TODO: errors should be visualized. this is a temporary kludge
+              var errmsg = nextevt.type + ": " + nextevt.msg
+              alert(errmsg)
+              throw errmsg
+            } else {
+              console.error('unknown event type')
             }
           }
           return [call, nextind + 1]
@@ -169,18 +177,13 @@
         } else {
           var items = []
           for(var key in obj) {
-            res += repr(key)
-            res += ': '
-            res += repr(obj[key])
+            var item = ''
+            item += repr(key)
+            item += ': '
+            item += repr(obj[key])
+            items.push(item)
           }
-          var res = '{'
-          for (var i=0; i < items.length; i++) {
-            res += items[i]
-            if(i != items.length - 1) {
-              res += ', '
-            }
-          }
-          return res + '}'
+          return '{' + items.join(', ') + '}'
         }
       }
       

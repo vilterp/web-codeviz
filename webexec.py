@@ -24,7 +24,7 @@ class ExecHandler(webapp.RequestHandler):
                 'msg': e.err.msg,
                 'lineno': e.err.lineno
             }
-        logging.debug(result)
+        # logging.debug(result)
         self.response.headers['Content-Type'] = 'application/json'
         self.response.out.write(simplejson.dumps(result))
     
