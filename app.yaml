@@ -11,3 +11,5 @@ handlers:
   upload: index.html
 - url: /js
   static_dir: js
+- url: /images
+  static_dir: images

@@ -12,6 +12,7 @@
     <script type="text/javascript" charset="utf-8">
       $(window).bind('load', function(){
         $('#source-form').submit(function(){
+          $('#spinner').show()
           $.post(
             '/exec',
             {
@@ -25,6 +26,7 @@
                 var ctx = canvas.getContext('2d')
                 var calls = layout(co, ctx)
                 render(calls, canvas, ctx)
+                $('#spinner').hide()
               } else {
                 // TODO: visualize syntax error
                 alert('Syntax error: line ' + data.lineno + ': ' + data.msg)
@@ -83,12 +85,13 @@
       var HEIGHT = 25
       var CALL_SPACING = HEIGHT + 10
       var MARGIN = 7
+      var CALL_FONT = '12pt monospace'
       
       function layout(call, context) {
         var calls = []
         var max_y = 0
         var max_x = 0
-        context.font = 'courier 10'
+        context.font = CALL_FONT
         function ly(call, startx, starty) {
           calls.push(call)
           call.calltext = call.func + '('
@@ -188,6 +191,7 @@
       }
       
       function render(calls, canvas, ctx) {
+        
         canvas.height = calls.max_y
         canvas.width = calls.max_x + CALL_SPACING
         // clear
@@ -197,7 +201,7 @@
         ctx.lineWidth = 1
         // for text
         ctx.fillStyle = 'black'
-        ctx.font = 'monospace 12'
+        ctx.font = CALL_FONT
         var call_list = calls.calls
         for (var i=0; i < call_list.length; i++) {
           // TODO: optimize all these calculations
@@ -211,6 +215,7 @@
           var rtwidth = ctx.measureText(retvaltext).width
           ctx.fillText(retvaltext, call.x + call.width - MARGIN - rtwidth, canvas.height - call.y + HEIGHT - MARGIN)
         }
+        
       }
       
     </script>
@@ -222,6 +227,7 @@
       </p>
       <p>
         <input type="submit" value="Exec"/>
+        <img id="spinner" style="display: none" src="images/spinner.gif"/>
       </p>
     </form>
       <div id="container">
