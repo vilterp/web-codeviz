@@ -13,4 +13,3 @@ handlers:
   static_dir: js
 - url: /images
   static_dir: images
-

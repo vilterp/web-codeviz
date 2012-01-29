@@ -1,0 +1,197 @@
+<html>
+  <head>
+    <title>Movement Test</title>
+    <script src="oop.js" type="text/javascript" charset="utf-8"></script>
+    <script src="rect.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript" charset="utf-8">
+      
+      var View = Obj.extend({
+        
+        init: function(ctx, frame, superview) {
+          this.frame = frame // Rect
+          this.ctx = ctx // Context
+          this.superview = superview // View
+          this.subviews = [] // [View]
+        },
+        
+        render: function() {
+          // prepare context to draw (translate & clip)
+          this.ctx.save()
+          this.ctx.translate(this.frame.x, this.frame.y)
+          this.ctx.beginPath()
+          this.ctx.rect(0, 0, this.frame.width, this.frame.height)
+          this.ctx.closePath()
+          this.ctx.clip()
+          // draw this
+          this.draw()
+          // render subviews
+          for (var i=0; i < this.subviews.length; i++) {
+            this.subviews[i].render()
+          }
+          // restore context
+          this.ctx.restore()
+        },
+        
+        addSubview: function(v) {
+          this.subviews.push(v)
+        },
+        
+        getDeepestView: function(pt) {
+          if(this.frame.containsPoint(pt)) {
+            for(var i=0; i < this.subviews.length; i++) {
+              var view = this.subviews[i]
+              // var translated = pt.subtractOffset(new Size(view.frame.x, view.frame.y))
+              var res = view.getDeepestView(pt)
+              if(res != null)
+                return res
+            }
+            return {
+              view: this,
+              pt: pt.subtractOffset(new Size(this.frame.x, this.frame.y))
+            }
+          } else {
+            return null
+          }
+        }
+        
+      })
+      
+      var WindowView = View.extend({
+        
+        init: function(ctx, frame) {
+          this._super(ctx, frame, null)
+        },
+        
+        toString: function() {
+          return 'WindowView(' + this.frame + ')'
+        },
+        
+        draw: function() {
+          this.ctx.fillStyle = 'lightblue'
+          this.ctx.fillRect(0, 0, this.frame.width, this.frame.height)
+        }
+        
+      })
+      
+      var MovableRect = View.extend({
+        
+        NOTHING: 0,
+        MOUSEOVER: 1,
+        CLICKED: 2,
+        
+        init: function(ctx, frame, superview) {
+          this._super(ctx, frame, superview, [])
+          this.state = this.NOTHING
+        },
+        
+        toString: function() {
+          return 'MovableRect(' + this.frame + ')'
+        },
+        
+        onMouseover: function() {
+          console.log('mouse over')
+          this.state = this.MOUSEOVER
+        },
+        
+        onMouseout: function() {
+          console.log('mouse out')
+          this.state = this.NOTHING
+        },
+        
+        onClick: function(pt) {
+          console.log('clicked at', pt)
+          this.state = this.CLICKED
+        },
+        
+        draw: function() {
+          switch(this.state) {
+            case this.NOTHING:
+              this.ctx.fillStyle = 'pink'
+              break
+            case this.MOUSEOVER:
+              this.ctx.fillStyle = 'red'
+              break
+            case this.CLICKED:
+              this.ctx.fillStyle = 'firebrick'
+              break
+          }
+          this.ctx.fillRect(0, 0, this.frame.width + 1000, this.frame.height + 1000)
+        }
+        
+      })
+      
+      var App = Obj.extend({
+        
+        init: function(canvas, topLevelView) {
+          this.topLevelView = topLevelView
+          this.canvas = canvas
+          this.ctx = canvas.getContext('2d')
+          this.offset = this.getRealOffset(canvas)
+          this.mousedOverView = this.topLevelView
+          // set up event handlers
+          this.canvas.onmousemove = (function(fn, scope){
+            return function(evt) {
+              fn.call(scope, evt)
+            }
+          })(this.onMouseMove, this)
+          this.canvas.onclick = (function(fn, scope){
+            return function(evt) {
+              fn.call(scope, evt)
+            }
+          })(this.onClick, this)
+          // go
+          this.topLevelView.render()          
+        },
+        
+        getRealOffset: function(elem) {
+          var p = elem.offsetParent
+          if(p == null) {
+            return new Size(0, 0)
+          } else {
+            var os = this.getRealOffset(p)
+            return new Size(os.width + elem.offsetLeft, os.height + elem.offsetTop)
+          }
+        },
+        
+        onMouseMove: function(evt) {
+          var pt = new Point(evt.clientX, evt.clientY).subtractOffset(this.offset)
+          var dv = this.topLevelView.getDeepestView(pt)
+          if(dv.view !== this.mousedOverView) {
+            this.mousedOverView = dv.view
+            console.log('mouse out / in')
+          }
+        },
+        
+        onClick: function(evt) {
+          var pt = new Point(evt.clientX, evt.clientY).subtractOffset(this.offset)
+          var clicked = this.topLevelView.getDeepestView(pt)
+          console.log('clicked: ', clicked)
+        },
+        
+      })
+      
+      
+      window.onload = function() {
+        
+        var canvas = document.getElementById('canvas')
+        var ctx = canvas.getContext('2d')
+        
+        // build scene
+        
+        var wv = new WindowView(ctx, new Rect(0, 0, canvas.width, canvas.height))
+        var mr = new MovableRect(ctx, new Rect(100, 100, 100, 100), wv)
+        wv.addSubview(mr)
+        var smr = new MovableRect(ctx, new Rect(10, 10, 10, 10), mr)
+        mr.addSubview(smr)
+        
+        var app = new App(canvas, wv)
+        console.log(app)
+        
+      }
+      
+    </script>
+  </head>
+  <body>
+    <canvas width="800" height="600" id="canvas"></canvas>
+  </body>
+</html>

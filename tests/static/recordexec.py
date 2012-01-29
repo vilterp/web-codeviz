@@ -6,9 +6,10 @@ OR = 0
 # TODO: sandbox -- no IO, no imports
 # TODO: line events -- local variable changes
 # TODO: deal width lambdas, classes
+# BUG: deep copy objects or something so they don't change after going into EVENTS
 
 RESTRICTED_BUILTINS = {}
-blacklist = set(['open', 'input', 'raw_input', 'eval', 'quit', '__import__', 'SystemExit'])
+blacklist = set(['open', 'input', 'raw_input', 'eval', 'quit', '__import__'])
 import __builtin__
 for item in dir(__builtin__):
     if item not in blacklist:
@@ -41,48 +42,7 @@ def recordexec(code):
     finally:    
         sys.settrace(None)
         sys.stdout = actual_stdout
-    return build_call_objects(EVENTS)
-
-def build_call_objects(events):
-    
-    def bco(events, start_ind):
-        evt = events[start_ind]
-        call = {
-            'type': 'call',
-            'func': evt['func'],
-            'args': evt['args'],
-            'subevents': []
-        }
-        nextind = start_ind + 1
-        subevents = call['subevents']
-        while True:
-            nextevt = events[nextind]
-            if nextevt['type'] == 'print':
-                buf = ''
-                while nextevt['type'] == 'print':
-                    buf += nextevt['output']
-                    nextind += 1
-                    nextevt = events[nextind]
-                subevents.append({
-                    'type': 'print',
-                    'output': buf
-                })
-            elif nextevt['type'] == 'call':
-                callobj, nextind = bco(events, nextind)
-                subevents.append(callobj)
-            elif nextevt['type'] == 'return':
-                call['retval'] = nextevt['val']
-                nextind += 1
-                break
-            else:
-                raise Exception('unknown event type', nextevt) # todo: handle exceptions...
-        return (call, nextind)
-    
-    call, nextind = bco(events, 0)
-    if nextind == len(events):
-        return call
-    else:
-        raise Exception('events left over: ', events[nextind:])
+    return EVENTS
 
 class OutputRecorder:
     
@@ -142,8 +102,8 @@ def testonfile(fn):
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         fn = sys.argv[1]
-        callobj = recordexec(open(fn).read())
-        import pprint
-        pprint.pprint(callobj)
+        events = recordexec(open(fn).read())
+        for e in events:
+            print e
     else:
         print 'supply file as arg'

@@ -20,7 +20,9 @@
         
         var rects = []
         
-        function init() {
+        var imagedata
+        
+        function layout() {
           for(var r=0; r < rows; r++) {
             rects[r] = []
             for(var c=0; c < cols; c++) {
@@ -39,28 +41,40 @@
           }
         }
         
-        init()
+        function move() {
+          var area = {
+            width: cols * w,
+            height: rows * h
+          }
+          var ctx = document.getElementById('canvas').getContext('2d')
+          var data = ctx.getImageData(0, 0, area.width, area.height)
+          console.log(data)
+          clear()
+          ctx.putImageData(data, 200, 0)
+        }
         
-        console.log('----- DRAW ------')
+        function clear() {
+          var canvas = document.getElementById('canvas')
+          var ctx = canvas.getContext('2d')
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+        }
         
-        var start = new Date()
+        console.profile('draw')
+        
+        layout()
         render()
-        var end = new Date()
         
-        var mselapsed = end.getTime() - start.getTime()
-        var rectsDrawn = cols * rows
+        console.profileEnd()
         
-        console.log(rectsDrawn + " rects")
-        console.log(mselapsed / 1000 + " sec")
-        console.log(mselapsed / rectsDrawn + " ms / rect")
-        
-        document.getElementById
-        
+        document.getElementById('move').addEventListener('click', move, false)
       }
       
     </script>
   </head>
   <body>
     <canvas id="canvas" width="1000" height="800"></canvas>
+    <p>
+      <input type="button" name="move" value="Move" id="move">
+    </p>
   </body>
 </html>

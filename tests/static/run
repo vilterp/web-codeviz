@@ -1,0 +1,9 @@
+#!/bin/sh
+PORT=8080
+URL="http://localhost:$PORT/"
+
+echo "opening $URL"
+open $URL
+
+echo "starting server..."
+dev_appserver.py $@ -p $PORT .
