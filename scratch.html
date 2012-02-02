@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>Scratch</title>
+    <style type="text/css" media="screen">
+      canvas {
+        border: 1px solid black;
+      }
+    </style>
+    <script src="js/jquery-1.4.4.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/oop.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/framework.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/codeviz.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/pythonstuff.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript" charset="utf-8">
+      $(window).bind('load', function(){
+        var canvas = $('#canvas')[0]
+        var ctx = canvas.getContext('2d')
+        var style = new TextStyle(12, 'monospace', 'black')
+        var text = 'hello world'
+        var tv = new TextView(ctx, new Rect(100, 100, 200, 200),
+                                null, text, style)
+        console.log(tv)
+        tv.render()
+        // style.setStyle(ctx)
+        //         ctx.fillText(text, 100, 100)
+      })
+    </script>
+  </head>
+  <body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+  </body>
+</html>

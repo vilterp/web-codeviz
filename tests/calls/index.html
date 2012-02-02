@@ -1,0 +1,105 @@
+<html>
+  <head>
+    <style type="text/css" media="screen">
+      .res_repr {
+        text-align: right;
+      } /*BUG: this doesn't work*/
+      .spacer {
+        width: 20px;
+      }
+    </style>
+    <script src="js/jquery-1.4.4.min.js" type="text/javascript" charset="utf-8"></script>
+    {% if res %}
+    <script type="text/javascript" charset="utf-8">
+      call = {{ res }} // eventually do this with ajax, not templating...
+      maxlevel = 0
+      currentlevel = 0
+      step = 0
+      var table;
+      function spacer() {
+        return $('<td class="spacer"></td>') 
+      }
+      function call_td(name, args, result) {
+        var td = $('<td class="call"></td>')
+        var repr = name + '(' + args.join(', ') + ')'
+        var call_span = $('<span class="call_repr">' + repr + "</span>")
+        td.append(call_span)
+        var res_span = $('<span class="res_repr">&rarr; ' + result + "</span>")
+        td.append(res_span)
+        return td
+      }
+      function add_call(call) {        
+        if(currentlevel == maxlevel) {
+          // add a new level
+          var newtr = $('<tr></tr>')
+          newtr.attr('id', 'row' + currentlevel)
+          // add spacers to take up to current step
+          for (var i=0; i < step; i++) {
+            newtr.append(spacer())
+          }
+          // add call
+          newtr.append(call_td(call['name'], call['args'], call['result']))
+          $('#calls').prepend(newtr)
+          // increase colspan of last tds in underlying trs
+          var lowerrows = $('#calls').find('tr')
+          lowerrows.splice(0,1) // remove top row
+          for (var i=0; i < lowerrows.length; i++) {
+            var last_td = $(lowerrows[i]).children().last()
+            inc_colspan(last_td)
+          }
+          currentlevel++
+          maxlevel++
+          step++
+          // add sub-calls
+          var subcalls = call['subcalls']
+          for (var j=0; j < subcalls.length; j++) {
+            add_call(subcalls[j])
+            add_spacer()
+          }
+          currentlevel--
+        } else {
+          console.log('receding to prev. row')
+        }
+      }
+      function current_row() {
+        var rows = $('#calls').find('tr')
+        return $(rows[rows.length - currentlevel - 1])
+      }
+      // add spacer to currentlevel+1 row
+      function add_spacer() {
+        var rows = $('#calls').find('tr')
+        var target_row = current_row()
+        target_row.append(spacer())
+        // inc colspans below
+        rows.splice(0, rows.length - currentlevel)
+        rows.each(function(i, elem) {
+          inc_colspan($(elem).children().last())
+        })
+      }
+      function inc_colspan(elem) {
+        elem.attr('colspan', elem.attr('colspan') + 1)
+      }
+      $(document).ready(function(){
+        add_call(call)
+      })
+    </script>
+    {% endif %}
+  </head>
+  <div id="form">
+    <form action='/' method='post'>
+        fib(<input type='text' id="num" name='num' value="{{ n }}"/>)
+    </form>
+  </div>
+  <div id="viz">
+    {% if toobig %}
+      too big! (n &lt;= 15)
+    {% else %}
+      {% if res %}
+        <table id="calls" border="1"></table>
+      {% endif %}
+    {% endif %}
+  </div>
+  <script type="text/javascript" charset="utf-8">
+    document.getElementById('num').focus()
+  </script>
+</html>
