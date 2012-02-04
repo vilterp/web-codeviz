@@ -42,7 +42,8 @@
             });
             return view.render();
           } else {
-            return alert("Syntax error: line " + data.lineno + ": " + data.msg);
+            alert("Syntax error: line " + data.lineno + ": " + data.msg);
+            return _this.set('state', 'failed');
           }
         }, 'json');
       };
@@ -65,6 +66,7 @@
         this.lineCount = $('#line-count');
         this.spinnerEl = $('#spinner');
         this.execButton = $('#exec-button');
+        this.stateIndicator = $('#state-indicator');
         this.editor = ace.edit('source');
         this.editor.setTheme('ace/theme/twilight');
         PythonMode = require('ace/mode/python').Mode;
@@ -83,6 +85,7 @@
         document.title = title.length === 0 ? 'Codeviz' : title + ' | Codeviz';
         lines = this.model.get('source').split('\n').length;
         this.lineCount.html("" + lines + " " + (lines === 1 ? 'line' : 'lines'));
+        this.stateIndicator.text(this.model.get('state'));
         if (this.model.get('state') === 'executing') {
           this.spinnerEl.show();
           return this.execButton.text('Executing...').attr('disabled', true);

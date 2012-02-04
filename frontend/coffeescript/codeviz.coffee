@@ -8,7 +8,7 @@ jQuery ->
     defaults:
       title: 'test'
       source: "print 'hello world'"
-      state: 'changed' # changed -> executing -> executed
+      state: 'changed' # changed -> executing -> [ executed | failed ]
       call_tree: null
     
     # send code to server for execution, update @call_tree with response
@@ -28,6 +28,7 @@ jQuery ->
                       view.render()
                     else
                       alert "Syntax error: line #{data.lineno}: #{data.msg}"
+                      this.set 'state', 'failed'
                   'json')
   
   
@@ -39,6 +40,7 @@ jQuery ->
       @lineCount = $('#line-count')
       @spinnerEl = $('#spinner')
       @execButton = $('#exec-button')
+      @stateIndicator = $('#state-indicator')
       # initialize ace (syntax highlighting)
       @editor = ace.edit('source')
       @editor.setTheme 'ace/theme/twilight'
@@ -60,6 +62,7 @@ jQuery ->
       lines = @model.get('source').split('\n').length
       @lineCount.html("#{lines} #{if lines == 1 then 'line' else 'lines'}")
       # reflect executing state
+      @stateIndicator.text(@model.get 'state')
       if @model.get('state') == 'executing'
         @spinnerEl.show()
         @execButton.text('Executing...')

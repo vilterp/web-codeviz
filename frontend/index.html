@@ -1,58 +1,40 @@
 <html>
   <head>
     <title>Codeviz</title>
-    <style type="text/css" media="screen">
-      canvas {
-        border: solid 1px black;
-      }
-    </style>
+    <link rel="stylesheet" href="/style.css" type="text/css" />
     <script src="js/jquery-1.4.4.min.js" type="text/javascript" charset="utf-8"></script>
-    <script src="js/oop.js" type="text/javascript" charset="utf-8"></script>
-    <script src="js/framework.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/d3/d3.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/underscore.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/backbone.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/ace/src/theme-twilight.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/ace/src/mode-python.js" type="text/javascript" charset="utf-8"></script>
     <script src="js/codeviz.js" type="text/javascript" charset="utf-8"></script>
-    <script src="js/pythonstuff.js" type="text/javascript" charset="utf-8"></script>
-    <script type="text/javascript" charset="utf-8">
-      $(window).bind('load', function(){
-        $('#source-form').submit(function(){
-          $('#spinner').show()
-          $.post(
-            '/exec',
-            {
-              'source': $('#source').val()
-            },
-            function(data, status, xhr) {
-              if(data.type == 'success') {
-                //console.profile('load & render')
-                var callobj = data.events
-                var canvas = document.getElementById('canvas')
-                var codeviz = new Codeviz(canvas, callobj)
-                console.log(codeviz)
-                $('#spinner').hide()
-                //console.profileEnd()
-              } else {
-                // TODO: visualize syntax error
-                alert('Syntax error: line ' + data.lineno + ': ' + data.msg)
-              }
-            },
-            'json'
-          )
-          return false // so the form doesn't actuall submit
-        })
-      })
-    </script>
   </head>
   <body>
-    <form id="source-form" action="exec" method="post" accept-charset="utf-8">
-      <p>
-        <textarea id="source" name="source" rows="20" cols="60"></textarea>
-      </p>
-      <p style="height: 30px">
-        <input type="submit" value="Exec"/>
-        <img id="spinner" style="display: none" src="images/spinner.gif"/>
-      </p>
-    </form>
-      <div id="container">
-        <canvas id="canvas"></canvas>
-      </div>
+    
+    <table width="100%">
+      <tr>
+        <td>
+          <div id="editor">
+            <p>
+              <input type="text" name="title" id="prog-title" autocomplete="off"/>.py
+            </p>
+            <p>
+              <button id="exec-button">Execute</button>
+              <span id="line-count"></span>
+              <img id="spinner" style="display: none" src="images/spinner.gif"/>
+            </p>
+            <p id="state-indicator"></p>
+            <div id="source"></div>
+          </div>
+        </td>
+        <td>
+          <div id="viz-container">
+          </div>
+        </td>
+      </tr>
+    </table>
+    
   </body>
 </html>

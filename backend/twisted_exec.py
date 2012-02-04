@@ -6,29 +6,32 @@ import ujson
 import logging
 import recordexec
 
-class ExecCall(Resource):
-		def render_POST(self, request):
-				try:
-						events = recordexec.recordexec(request.args["source"][0])
-						result = {
-								'type': 'success',
-								'events': events
-						}
-				except recordexec.CompilationError, e:
-						result = {
-						'type': 'error',
-						'msg': e.err.msg,
-						'lineno': e.err.lineno
-						}
-				return ujson.encode(result)
+logging.basicConfig(level=logging.INFO)
 
-root = static.File('html')
+class ExecCall(Resource):
+  def render_POST(self, request):
+    logging.info('exec %s' % request.args['title'])
+    try:
+      events = recordexec.recordexec(request.args["source"][0])
+      result = {
+        'type': 'success',
+        'events': events
+      }
+    except recordexec.CompilationError, e:
+      result = {
+        'type': 'error',
+        'msg': e.err.msg,
+        'lineno': e.err.lineno
+      }
+    return ujson.encode(result)
+
+root = static.File('frontend')
 root.putChild('exec', ExecCall())
 factory = Site(root)
 
 port = 3000
 
-print 'starting up...'
+logging.info('starting up...')
 reactor.listenTCP(port, factory)
-print 'running on port %d' % port
+logging.info('running on port %d' % port)
 reactor.run()
