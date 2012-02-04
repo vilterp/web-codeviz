@@ -1,0 +1,15 @@
+BUGS
+
+- CallViews calling render() in their onMouseIn, onMouseOut events only works cuz their superview has no translation.
+  - come up with a real re-rendering queue system, like Cocoa's needsDisplayRect or whatever it is
+
+TODO
+
+- should only check visible subviews...
+- click events should bubble up (offsetting all the way...)
+
+- scroller
+- highlight lines on mouseover
+- line cursor
+- local variables
+- ...
